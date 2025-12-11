@@ -82,7 +82,15 @@ Reset log file:
 python3 clear_data.py
 
 Start the system:
+1. Hit the RUN button on Thonny!
+2. Press the button on the bread board to start and stop
+3. Use the cleenex, or clorox wipe to cover the sensor and watch the graph change, and the fan turn on
+4. Press the button again to pause, or exit the graph to stop!
+
+OR
+
 python3 air_quality_live.py
+
 
 Behavior:
 - System starts in PAUSED mode.
@@ -93,41 +101,46 @@ Behavior:
 
 ---
 
-## 4. Flow Chart 
+## 4. Flow Chart
 
-This flow chart illustrates the main computational steps implemented in the Python code.
+Below is the system's flow chart:
 
 ```mermaid
 flowchart TD
-    START[Start program] --> INIT[Initialize GPIO, SPI,<br/>CSV log, state = PAUSED]
-    INIT --> LOOP{{Matplotlib update loop}}
+    A[Start Program] --> B[Initialize GPIO, SPI, CSV]
+    B --> C[Set state = PAUSED]
+    C --> D[Matplotlib update loop]
 
-    LOOP --> BTN[Read button input]
-    BTN -->|Pressed| TOGGLE[Toggle state PAUSED/RUNNING]
-    BTN -->|Not pressed| STATE_CHECK[Check state]
+    D --> E[Read button input]
+    E --> F{Button pressed?}
 
-    TOGGLE --> STATE_CHECK
+    F -- Yes --> G[Toggle state PAUSED/RUNNING]
+    G --> D
 
-    STATE_CHECK -->|PAUSED| PAUSED[State = PAUSED<br/>Fan OFF<br/>Skip read/log]
-    PAUSED --> LOOP
+    F -- No --> H{State == RUNNING?}
 
-    STATE_CHECK -->|RUNNING| RUNNING[State = RUNNING]
-    RUNNING --> READ[Read MQ-2 value from MCP3008 CH0]
-    READ --> COMPARE[Compare gas value<br/>to THRESHOLD]
+    H -- No --> I[PAUSED state: Fan OFF, skip reading/logging]
+    I --> D
 
-    COMPARE -->|gas > THRESHOLD| FAN_ON[Fan ON]
-    COMPARE -->|gas ≤ THRESHOLD| FAN_OFF[Fan OFF]
+    H -- Yes --> J[Read MQ-2 value]
+    J --> K[Compare to THRESHOLD]
+    K --> L{Gas > THRESHOLD?}
 
-    FAN_ON --> LOG[Log timestamp, gas, fan status<br/>Update plot data]
-    FAN_OFF --> LOG
+    L -- Yes --> M[Fan ON]
+    L -- No --> N[Fan OFF]
 
-    LOG --> LOOP
+    M --> O[Log values]
+    N --> O
 
-    LOOP -->|User closes graph window| EXIT[Cleanup GPIO, stop SPI,<br/>Fan OFF]
-    EXIT --> END[End program]
+    O --> P[Update live plot]
+    P --> Q{Graph window closed?}
 
+    Q -- No --> D
+    Q -- Yes --> R[Cleanup GPIO & SPI, Fan OFF]
+    R --> S[End Program]
+```
 
-This flow chart matches the exact control process in `air_quality_live.py`.
+This flow chart matches the logic in `air_quality_live.py`.
 
 ---
 
