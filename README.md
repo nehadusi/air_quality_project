@@ -174,3 +174,4 @@ Raspberry Pi GPIO documentation
 Python spidev library
 Python matplotlib documentation
 
+# air_quality_project
