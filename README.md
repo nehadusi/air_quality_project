@@ -55,7 +55,7 @@ Fan + MOSFET
 - Fan red → 5V  
 - Fan black → MOSFET Drain  
 - MOSFET Source → GND  
-- MOSFET Gate → resistor (330–1kΩ) → GPIO 18  
+- MOSFET Gate → resistor (330Ω) → GPIO 18  
 
 Button
 - One side → GPIO 23  
@@ -97,69 +97,34 @@ Behavior:
 
 This flow chart illustrates the main computational steps implemented in the Python code.
 
+```mermaid
+flowchart TD
+    START[Start program] --> INIT[Initialize GPIO, SPI,<br/>CSV log, state = PAUSED]
+    INIT --> LOOP{{Matplotlib update loop}}
 
-                      +---------------------------+
-                      |        START PROGRAM      |
-                      +---------------------------+
-                                   |
-                                   v
-                      +---------------------------+
-                      | Initialize GPIO, SPI, CSV |
-                      | Set state = PAUSED        |
-                      +---------------------------+
-                                   |
-                                   v
-                      +---------------------------+
-                      |  Matplotlib Update Loop   |
-                      +---------------------------+
-                                   |
-            +----------------------+------------------------+
-            |                                               |
-            v                                               v
-+---------------------------+                 +---------------------------+
-|  Read button input        |                 |  If state == PAUSED       |
-|  If pressed: toggle state |                 |  Fan OFF                  |
-+---------------------------+                 |  Skip reading/logging     |
-            |                                 +---------------------------+
-            v                                               |
-+---------------------------+                               |
-|  If state == RUNNING      |                               |
-|  Read MQ-2 value          |                               |
-|  Compare to THRESHOLD     |                               |
-+-------------+-------------+                               |
-              |                                             |
-              v                                             |
-     +-----------------+                                    |
-     | gas > threshold |-----YES----------------------------+
-     +-----------------+                     Fan ON
-              |
-             NO
-              |
-              v
-          Fan OFF
-              |
-              v
-+---------------------------+
-| Log timestamp, gas, fan   |
-| Update plot with new data |
-+---------------------------+
-              |
-              v
-+---------------------------+
-|  Continue until user      |
-|  closes graph window      |
-+---------------------------+
-              |
-              v
-+---------------------------+
-| Cleanup GPIO, stop SPI    |
-| Fan OFF                   |
-+---------------------------+
-              |
-              v
-     +---------------------+
-     |       END           |
-     +---------------------+
+    LOOP --> BTN[Read button input]
+    BTN -->|Pressed| TOGGLE[Toggle state PAUSED/RUNNING]
+    BTN -->|Not pressed| STATE_CHECK[Check state]
+
+    TOGGLE --> STATE_CHECK
+
+    STATE_CHECK -->|PAUSED| PAUSED[State = PAUSED<br/>Fan OFF<br/>Skip read/log]
+    PAUSED --> LOOP
+
+    STATE_CHECK -->|RUNNING| RUNNING[State = RUNNING]
+    RUNNING --> READ[Read MQ-2 value from MCP3008 CH0]
+    READ --> COMPARE[Compare gas value<br/>to THRESHOLD]
+
+    COMPARE -->|gas > THRESHOLD| FAN_ON[Fan ON]
+    COMPARE -->|gas ≤ THRESHOLD| FAN_OFF[Fan OFF]
+
+    FAN_ON --> LOG[Log timestamp, gas, fan status<br/>Update plot data]
+    FAN_OFF --> LOG
+
+    LOG --> LOOP
+
+    LOOP -->|User closes graph window| EXIT[Cleanup GPIO, stop SPI,<br/>Fan OFF]
+    EXIT --> END[End program]
 
 
 This flow chart matches the exact control process in `air_quality_live.py`.
