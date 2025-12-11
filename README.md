@@ -98,40 +98,69 @@ Behavior:
 This flow chart illustrates the main computational steps implemented in the Python code.
 
 
-Start
-  |
-  v
-Initialize GPIO, SPI, CSV log, and plot
-  |
-  v
-Set state = PAUSED
-  |
-  v
-Loop (Matplotlib animation):
-    |
-    +--> Read button
-    |    |
-    |    +-- If button pressed: toggle state (PAUSED/RUNNING)
-    |
-    +--> If state == PAUSED:
-    |        Fan OFF
-    |        (skip reading and logging)
-    |
-    +--> If state == RUNNING:
-             Read gas value from MCP3008 CH0
-             Compare gas value to THRESHOLD
-             If gas > THRESHOLD:
-                 Fan ON
-             Else:
-                 Fan OFF
-             Log timestamp, gas value, fan status to CSV
-             Update x/y data and redraw graph
-  |
-  v
-User closes graph window
-  |
-  v
-Turn fan OFF, close SPI, GPIO cleanup, End
+                      +---------------------------+
+                      |        START PROGRAM      |
+                      +---------------------------+
+                                   |
+                                   v
+                      +---------------------------+
+                      | Initialize GPIO, SPI, CSV |
+                      | Set state = PAUSED        |
+                      +---------------------------+
+                                   |
+                                   v
+                      +---------------------------+
+                      |  Matplotlib Update Loop   |
+                      +---------------------------+
+                                   |
+            +----------------------+------------------------+
+            |                                               |
+            v                                               v
++---------------------------+                 +---------------------------+
+|  Read button input        |                 |  If state == PAUSED       |
+|  If pressed: toggle state |                 |  Fan OFF                  |
++---------------------------+                 |  Skip reading/logging     |
+            |                                 +---------------------------+
+            v                                               |
++---------------------------+                               |
+|  If state == RUNNING      |                               |
+|  Read MQ-2 value          |                               |
+|  Compare to THRESHOLD     |                               |
++-------------+-------------+                               |
+              |                                             |
+              v                                             |
+     +-----------------+                                    |
+     | gas > threshold |-----YES----------------------------+
+     +-----------------+                     Fan ON
+              |
+             NO
+              |
+              v
+          Fan OFF
+              |
+              v
++---------------------------+
+| Log timestamp, gas, fan   |
+| Update plot with new data |
++---------------------------+
+              |
+              v
++---------------------------+
+|  Continue until user      |
+|  closes graph window      |
++---------------------------+
+              |
+              v
++---------------------------+
+| Cleanup GPIO, stop SPI    |
+| Fan OFF                   |
++---------------------------+
+              |
+              v
+     +---------------------+
+     |       END           |
+     +---------------------+
+
 
 This flow chart matches the exact control process in `air_quality_live.py`.
 
